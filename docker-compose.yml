@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: rurik_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  server:
+    build:
+      context: ./server
+    container_name: rurik_server
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ./.env
+    ports:
+      - "${SERVER_PORT}:3000"
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm run migrate && npm run dev"
+
+  client:
+    build:
+      context: ./client
+    container_name: rurik_client
+    restart: unless-stopped
+    depends_on:
+      - server
+    env_file:
+      - ./.env
+    ports:
+      - "${CLIENT_PORT}:5173"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+
+volumes:
+  postgres_data:
