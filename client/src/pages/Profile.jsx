@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { meRequest, updateProfileRequest } from '../api/authApi';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 export default function Profile() {
   const { user, setUser } = useAuth();
+  const { showToast } = useToast();
 
   const [form, setForm] = useState({
     email: '',
@@ -32,13 +34,14 @@ export default function Profile() {
         setUser(data);
       } catch (err) {
         console.error('Ошибка загрузки профиля:', err);
+        showToast('Ошибка загрузки профиля', 'error');
       }
     };
 
     if (user) {
       loadProfile();
     }
-  }, [user, setUser]);
+  }, [user, setUser, showToast]);
 
   const handleChange = (e) => {
     setForm((prev) => ({
@@ -62,12 +65,16 @@ export default function Profile() {
       const { data } = await updateProfileRequest(payload);
       setUser(data.user);
       setMessage('Изменения сохранены');
+      showToast('Изменения сохранены', 'success');
+
       setForm((prev) => ({
         ...prev,
         password: ''
       }));
     } catch (err) {
-      setError(err.response?.data?.message || 'Ошибка сохранения профиля');
+      const errorMessage = err.response?.data?.message || 'Ошибка сохранения профиля';
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
     }
   };
 

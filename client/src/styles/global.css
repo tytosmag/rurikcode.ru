@@ -105,12 +105,14 @@ input {
   gap: 14px;
 }
 
-.full-width-link {
-  display: block;
+.menu-grid button,
+.form-card button,
+.full-width-link button {
   width: 100%;
 }
 
-.full-width-link button {
+.full-width-link {
+  display: block;
   width: 100%;
 }
 
@@ -205,5 +207,70 @@ input {
   .leaderboard-row {
     grid-template-columns: 70px 1fr 90px;
     font-size: 14px;
+  }
+}
+
+.header-button {
+  width: auto;
+  padding: 10px 14px;
+}
+
+.content-card {
+  max-width: 720px;
+  background: #0b1220;
+  border: 1px solid #1f2937;
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.not-found {
+  text-align: center;
+}
+
+.not-found h1 {
+  font-size: 96px;
+  margin-bottom: 0;
+}
+
+.toast-container {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 9999;
+  display: grid;
+  gap: 12px;
+  width: min(360px, calc(100vw - 48px));
+}
+
+.toast {
+  padding: 14px 16px;
+  border-radius: 14px;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+  animation: toast-in .2s ease-out;
+}
+
+.toast-success {
+  background: #16a34a;
+}
+
+.toast-error {
+  background: #dc2626;
+}
+
+.toast-info {
+  background: #2563eb;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

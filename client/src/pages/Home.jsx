@@ -1,8 +1,15 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 export default function Home() {
   const { user, logout } = useAuth();
+  const { showToast } = useToast();
+
+  const handleLogout = async () => {
+    await logout();
+    showToast('Вы вышли из аккаунта', 'success');
+  };
 
   return (
     <section className="hero">
@@ -12,7 +19,9 @@ export default function Home() {
       </p>
 
       <div className="menu-grid">
-        <button type="button">Новая игра</button>
+        <Link to="/game" className="full-width-link">
+          <button type="button">Новая игра</button>
+        </Link>
 
         <Link to="/leaderboard" className="full-width-link">
           <button type="button">Таблица лидеров</button>
@@ -23,7 +32,7 @@ export default function Home() {
         </Link>
 
         {user ? (
-          <button type="button" onClick={logout}>
+          <button type="button" onClick={handleLogout}>
             Выйти
           </button>
         ) : (

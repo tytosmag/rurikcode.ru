@@ -2,15 +2,18 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { loginRequest } from '../api/authApi';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 export default function Login() {
   const [form, setForm] = useState({
     username: '',
     password: ''
   });
+
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { setUser } = useAuth();
+  const { showToast } = useToast();
 
   const handleChange = (e) => {
     setForm((prev) => ({
@@ -26,9 +29,12 @@ export default function Login() {
     try {
       const { data } = await loginRequest(form);
       setUser(data.user);
+      showToast('Вход выполнен', 'success');
       navigate('/profile');
     } catch (err) {
-      setError(err.response?.data?.message || 'Ошибка входа');
+      const message = err.response?.data?.message || 'Ошибка входа';
+      setError(message);
+      showToast(message, 'error');
     }
   };
 

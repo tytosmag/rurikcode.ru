@@ -1,12 +1,25 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { registerRequest } from '../api/authApi';
+import { useToast } from '../context/ToastContext';
 
 export default function Registr() {
-  const [form, setForm] = useState({ username: '', password: '' });
+  const [form, setForm] = useState({
+    username: '',
+    password: ''
+  });
+
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  const handleChange = (e) => {
+    setForm((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,29 +29,48 @@ export default function Registr() {
     try {
       const { data } = await registerRequest(form);
       setMessage(data.message);
-      setTimeout(() => navigate('/login'), 800);
+      showToast('Регистрация успешна', 'success');
+
+      setTimeout(() => {
+        navigate('/login');
+      }, 800);
     } catch (err) {
-      setError(err.response?.data?.message || 'Ошибка регистрации');
+      const errorMessage = err.response?.data?.message || 'Ошибка регистрации';
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
     }
   };
 
   return (
-    <form className="form-card" onSubmit={handleSubmit}>
-      <h2>Регистрация</h2>
-      <input
-        placeholder="Логин"
-        value={form.username}
-        onChange={(e) => setForm({ ...form, username: e.target.value })}
-      />
-      <input
-        type="password"
-        placeholder="Пароль"
-        value={form.password}
-        onChange={(e) => setForm({ ...form, password: e.target.value })}
-      />
-      {message && <p className="success">{message}</p>}
-      {error && <p className="error">{error}</p>}
-      <button type="submit">Создать аккаунт</button>
-    </form>
+    <section className="form-section">
+      <form className="form-card" onSubmit={handleSubmit}>
+        <h2>Регистрация</h2>
+
+        <input
+          type="text"
+          name="username"
+          placeholder="Логин"
+          value={form.username}
+          onChange={handleChange}
+        />
+
+        <input
+          type="password"
+          name="password"
+          placeholder="Пароль"
+          value={form.password}
+          onChange={handleChange}
+        />
+
+        {message && <p className="success">{message}</p>}
+        {error && <p className="error">{error}</p>}
+
+        <button type="submit">Создать аккаунт</button>
+
+        <div className="form-links">
+          <Link to="/login">Уже есть аккаунт?</Link>
+        </div>
+      </form>
+    </section>
   );
 }
