@@ -12,10 +12,10 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-app.get('/api/health', (req, res) => {
+app.get('/api/auth/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-app.use('/api', routes);
+app.use('/api/auth', routes);
 
 export default app;

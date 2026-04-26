@@ -8,29 +8,23 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
 
-  server:
+  auth-service:
     build:
-      context: ./server
-    container_name: rurik_server
+      context: ./auth-service
+    container_name: rurik_auth
     restart: unless-stopped
     depends_on:
-      db:
-        condition: service_healthy
+      - db
     env_file:
       - ./.env
     ports:
-      - "${SERVER_PORT}:3000"
+      - "3000:3000"
     volumes:
-      - ./server:/app
+      - ./auth-service:/app
       - /app/node_modules
     command: sh -c "npm install && npm run migrate && npm run dev"
 
@@ -40,11 +34,9 @@ services:
     container_name: rurik_client
     restart: unless-stopped
     depends_on:
-      - server
-    env_file:
-      - ./.env
+      - auth-service
     ports:
-      - "${CLIENT_PORT}:5173"
+      - "5173:5173"
     volumes:
       - ./client:/app
       - /app/node_modules
