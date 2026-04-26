@@ -6,14 +6,14 @@ import routes from './routes/index.js';
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: 'http://localhost:8080', // Но так как фронт и бэк на одном домене, можно указать просто '*'
   credentials: true,
 }));
 app.use(express.json());
 app.use(cookieParser());
 
 app.get('/api/auth/health', (req, res) => {
-  res.json({ status: 'ok' });
+  return res.json({ status: 'auth-service ok' });
 });
 
 app.use('/api/auth', routes);

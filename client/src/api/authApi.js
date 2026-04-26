@@ -1,13 +1,15 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3000/api/auth',
-  withCredentials: true,
+  baseURL: '/api/auth',
+  withCredentials: true
 });
 
-export const loginRequest = (data) => api.post('/auth/login', data);
-export const registerRequest = (data) => api.post('/auth/register', data);
-export const restoreRequest = (data) => api.post('/auth/restore', data);
-export const logoutRequest = () => api.post('/auth/logout');
-export const meRequest = () => api.get('/auth/me');
+export const loginRequest = (data) => api.post('/login', data);
+export const registerRequest = (data) => api.post('/register', data);
+export const restoreRequest = (data) => api.post('/restore', data);
+export const logoutRequest = () => api.post('/logout');
+export const meRequest = () => api.get('/me');
 export const updateProfileRequest = (data) => api.put('/profile', data);
+
+export default api;
