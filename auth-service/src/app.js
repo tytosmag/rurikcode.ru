@@ -6,7 +6,7 @@ import routes from './routes/index.js';
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:8080', // Но так как фронт и бэк на одном домене, можно указать просто '*'
+  // origin: 'http://localhost:8080', // Но так как фронт и бэк на одном домене, можно указать просто '*'
   credentials: true,
 }));
 app.use(express.json());
