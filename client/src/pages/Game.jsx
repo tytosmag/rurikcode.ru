@@ -31,7 +31,7 @@ export default function Game() {
     };
 
     loadStartScene();
-  }, [showToast]);
+  }, []); //TODO: eslint потом может ругнуться
 
   const handleChoice = async (choiceId) => {
     if (!scene) return;
