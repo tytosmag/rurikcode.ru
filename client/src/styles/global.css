@@ -291,3 +291,23 @@ input {
   gap: 8px;
   color: #cbd5e1;
 }
+
+/* Game */
+.game-stats {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: #cbd5e1;
+}
+
+.game-stats span {
+  background: #111827;
+  border: 1px solid #1f2937;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.game-actions {
+  display: grid;
+  gap: 12px;
+}
