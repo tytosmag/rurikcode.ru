@@ -48,6 +48,20 @@ services:
       - /app/node_modules
     command: sh -c "npm install && npm run migrate && npm run dev"
 
+  game-service:
+    build:
+      context: ./game-service
+    container_name: rurik_game
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    expose:
+      - "3002"
+    volumes:
+      - ./game-service:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm run dev"
+
   client:
     build:
       context: ./client
@@ -70,6 +84,7 @@ services:
       - client
       - auth-service
       - leaderboard-service
+      - game-service
     ports:
       - "8080:80"
     volumes:
