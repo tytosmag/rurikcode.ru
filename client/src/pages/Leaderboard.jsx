@@ -1,29 +1,62 @@
+import { useEffect, useState } from 'react';
+import { getLeaderboardRequest } from '../api/leaderboardApi';
+import { useToast } from '../context/ToastContext';
+
 export default function Leaderboard() {
-  const mockLeaders = [
-    { id: 1, username: 'Rurik', score: 1200 },
-    { id: 2, username: 'Vova', score: 980 },
-    { id: 3, username: 'Novgorod', score: 870 }
-  ];
+  const [leaders, setLeaders] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    const loadLeaderboard = async () => {
+      try {
+        const { data } = await getLeaderboardRequest();
+        setLeaders(data.leaders || []);
+      } catch (error) {
+        console.error('Ошибка загрузки таблицы лидеров:', error);
+        showToast('Ошибка загрузки таблицы лидеров', 'error');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadLeaderboard();
+  }, [showToast]);
+
+  if (isLoading) {
+    return (
+      <section className="content-page">
+        <h1>Таблица лидеров</h1>
+        <p>Загрузка...</p>
+      </section>
+    );
+  }
 
   return (
     <section className="content-page">
       <h1>Таблица лидеров</h1>
 
-      <div className="leaderboard-card">
-        <div className="leaderboard-row leaderboard-head">
-          <span>Место</span>
-          <span>Игрок</span>
-          <span>Очки</span>
+      {leaders.length === 0 ? (
+        <div className="content-card">
+          <p>Пока нет результатов.</p>
         </div>
-
-        {mockLeaders.map((player, index) => (
-          <div key={player.id} className="leaderboard-row">
-            <span>{index + 1}</span>
-            <span>{player.username}</span>
-            <span>{player.score}</span>
+      ) : (
+        <div className="leaderboard-card">
+          <div className="leaderboard-row leaderboard-head">
+            <span>Место</span>
+            <span>Игрок</span>
+            <span>Очки</span>
           </div>
-        ))}
-      </div>
+
+          {leaders.map((player, index) => (
+            <div key={player.id} className="leaderboard-row">
+              <span>{index + 1}</span>
+              <span>{player.username}</span>
+              <span>{player.score}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
