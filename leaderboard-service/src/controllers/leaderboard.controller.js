@@ -27,26 +27,39 @@ export const getLeaderboard = async (req, res) => {
 
 export const createLeaderboardResult = async (req, res) => {
   try {
-    const {
-      user_id,
-      username,
-      score,
-      time_seconds,
-      level
-    } = req.body;
+    const { score, time_seconds, level } = req.body;
 
-    if (!username || score === undefined) {
+    if (score === undefined || score === null) {
       return res.status(400).json({
-        message: 'username и score обязательны'
+        message: 'score обязателен'
+      });
+    }
+
+    const numericScore = Number(score);
+
+    if (!Number.isInteger(numericScore) || numericScore < 0) {
+      return res.status(400).json({
+        message: 'score должен быть целым числом больше или равным 0'
+      });
+    }
+
+    const numericTime = time_seconds ? Number(time_seconds) : null;
+
+    if (
+      numericTime !== null &&
+      (!Number.isInteger(numericTime) || numericTime < 0)
+    ) {
+      return res.status(400).json({
+        message: 'time_seconds должен быть целым числом больше или равным 0'
       });
     }
 
     const [result] = await db('leaderboard')
       .insert({
-        user_id: user_id || null,
-        username,
-        score,
-        time_seconds: time_seconds || null,
+        user_id: req.user.id,
+        username: req.user.username,
+        score: numericScore,
+        time_seconds: numericTime,
         level: level || null
       })
       .returning([
