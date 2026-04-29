@@ -13,6 +13,7 @@ export default {
     },
     migrations: {
       directory: './migrations',
-    },
+      tableName: 'auth_migrations'
+    }
   },
 };

@@ -274,3 +274,20 @@ input {
     transform: translateY(0);
   }
 }
+
+/* Leaderboard */
+.game-card {
+  display: grid;
+  gap: 16px;
+}
+
+.game-form {
+  display: grid;
+  gap: 14px;
+}
+
+.game-form label {
+  display: grid;
+  gap: 8px;
+  color: #cbd5e1;
+}
