@@ -17,6 +17,76 @@ services:
       timeout: 5s
       retries: 10
 
+  alloy-agent:
+    image: grafana/alloy:latest
+    container_name: rurik_alloy_agent
+    restart: unless-stopped
+    command:
+      - "run"
+      - "/etc/alloy/config.alloy"
+      - "--server.http.listen-addr=0.0.0.0:12345"
+    environment:
+      LOKI_URL: ${LOKI_URL}
+    volumes:
+      - ./observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  node_exporter:
+    image: prom/node-exporter:latest
+    container_name: rurik_node_exporter
+    restart: unless-stopped
+    command:
+      - "--path.rootfs=/host"
+    pid: host
+    volumes:
+      # TODO:
+      # В локальной системе Docker через Snap/окружение не дает использовать rslave для /. 
+      # Нужно это как-то обойти, чтобы избежать проблем с зависимостями между контейнерами и хостом. 
+      # Пока что просто ro, но это может вызвать проблемы с метриками при перезапуске контейнера.
+      # - "/:/host:ro,rslave" 
+      - "/:/host:ro"
+    ports:
+      - "${NODE_EXPORTER_PORT:-9100}:9100"
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: rurik_cadvisor
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - "/:/rootfs:ro"
+      - "/var/run:/var/run:ro"
+      - "/sys:/sys:ro"
+      - "${DOCKER_ROOT_DIR:-/var/lib/docker}:/var/lib/docker:ro"
+      - "/dev/disk/:/dev/disk:ro"
+    ports:
+      - "${CADVISOR_PORT:-18080}:8080"
+
+  postgres_exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: rurik_postgres_exporter
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${POSTGRES_EXPORTER_PORT:-9187}:9187"
+
+  nginx_exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: rurik_nginx_exporter
+    restart: unless-stopped
+    command:
+      - "-nginx.scrape-uri=http://gateway/stub_status"
+    depends_on:
+      - gateway
+    ports:
+      - "${NGINX_EXPORTER_PORT:-9113}:9113"
+
   auth-service:
     build:
       context: ./auth-service
@@ -87,6 +157,7 @@ services:
       - game-service
     ports:
       - "8080:80"
+      - "443:443"
     volumes:
       - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
 
