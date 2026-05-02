@@ -1,4 +1,5 @@
 node_modules
 observability/data/
+.vite
 .env
 *.log
