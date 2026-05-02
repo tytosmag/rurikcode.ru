@@ -8,9 +8,9 @@ loki.source.docker "docker_logs" {
   forward_to = [loki.write.default.receiver]
 
   labels = {
-    job         = "rurikcode-docker"
-    project     = "rurikcode"
-    environment = "staging"
+    job         = "rurikcode-docker",
+    project     = "rurikcode",
+    environment = "staging",
   }
 }
 
