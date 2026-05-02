@@ -266,15 +266,53 @@ jobs:
           script: |
             set -e
 
+            APP_DIR="${{ secrets.STAGING_APP_DIR }}"
+            REPO_URL="https://github.com/${{ github.repository }}.git"
+            BRANCH="develop"
+
             echo "Login to GHCR..."
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-            echo "Go to staging directory..."
-            cd ${{ secrets.STAGING_APP_DIR }}
+            echo "Prepare staging directory..."
+            mkdir -p "$APP_DIR"
 
-            echo "Pull repository changes..."
-            git fetch origin develop
-            git reset --hard origin/develop
+            if [ -f "$APP_DIR/.env" ]; then
+              echo "Backup existing .env..."
+              cp "$APP_DIR/.env" /tmp/rurik-staging.env
+            fi
+
+            if [ ! -d "$APP_DIR/.git" ]; then
+              echo "No git repository found. Cloning $BRANCH into $APP_DIR..."
+
+              TMP_DIR="${APP_DIR}.tmp"
+
+              rm -rf "$TMP_DIR"
+              git clone -b "$BRANCH" "$REPO_URL" "$TMP_DIR"
+
+              if [ -f /tmp/rurik-staging.env ]; then
+                cp /tmp/rurik-staging.env "$TMP_DIR/.env"
+              fi
+
+              rm -rf "$APP_DIR"
+              mv "$TMP_DIR" "$APP_DIR"
+            else
+              echo "Git repository found. Updating $BRANCH..."
+
+              cd "$APP_DIR"
+              git remote set-url origin "$REPO_URL"
+              git fetch origin "$BRANCH"
+              git reset --hard "origin/$BRANCH"
+
+              if [ -f /tmp/rurik-staging.env ]; then
+                cp /tmp/rurik-staging.env "$APP_DIR/.env"
+              fi
+            fi
+
+            echo "Go to staging directory..."
+            cd "$APP_DIR"
+
+            echo "Check compose config..."
+            docker compose -f docker-compose.yml -f docker-compose.staging.yml config
 
             echo "Pull new images..."
             docker compose -f docker-compose.yml -f docker-compose.staging.yml pull
@@ -329,15 +367,53 @@ jobs:
           script: |
             set -e
 
+            APP_DIR="${{ secrets.PRODUCTION_APP_DIR }}"
+            REPO_URL="https://github.com/${{ github.repository }}.git"
+            BRANCH="main"
+
             echo "Login to GHCR..."
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
-            echo "Go to production directory..."
-            cd ${{ secrets.PRODUCTION_APP_DIR }}
+            echo "Prepare production directory..."
+            mkdir -p "$APP_DIR"
 
-            echo "Pull repository changes..."
-            git fetch origin main
-            git reset --hard origin/main
+            if [ -f "$APP_DIR/.env" ]; then
+              echo "Backup existing .env..."
+              cp "$APP_DIR/.env" /tmp/rurik-production.env
+            fi
+
+            if [ ! -d "$APP_DIR/.git" ]; then
+              echo "No git repository found. Cloning $BRANCH into $APP_DIR..."
+
+              TMP_DIR="${APP_DIR}.tmp"
+
+              rm -rf "$TMP_DIR"
+              git clone -b "$BRANCH" "$REPO_URL" "$TMP_DIR"
+
+              if [ -f /tmp/rurik-production.env ]; then
+                cp /tmp/rurik-production.env "$TMP_DIR/.env"
+              fi
+
+              rm -rf "$APP_DIR"
+              mv "$TMP_DIR" "$APP_DIR"
+            else
+              echo "Git repository found. Updating $BRANCH..."
+
+              cd "$APP_DIR"
+              git remote set-url origin "$REPO_URL"
+              git fetch origin "$BRANCH"
+              git reset --hard "origin/$BRANCH"
+
+              if [ -f /tmp/rurik-production.env ]; then
+                cp /tmp/rurik-production.env "$APP_DIR/.env"
+              fi
+            fi
+
+            echo "Go to production directory..."
+            cd "$APP_DIR"
+
+            echo "Check compose config..."
+            docker compose -f docker-compose.yml -f docker-compose.production.yml config
 
             echo "Pull new images..."
             docker compose -f docker-compose.yml -f docker-compose.production.yml pull
