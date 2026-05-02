@@ -1,0 +1,107 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+  pull_request:
+    branches:
+      - develop
+      - main
+
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: 20.x
+  CLIENT_ARTIFACT_NAME: client-dist-${{ github.sha }}
+
+jobs:
+  checks:
+    name: JOB 1 — Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # ─────────────────────────────────────────────
+      # auth-service
+      # ─────────────────────────────────────────────
+      - name: Install auth-service dependencies
+        working-directory: auth-service
+        run: npm ci
+
+      - name: Check auth-service scripts
+        working-directory: auth-service
+        run: |
+          npm run lint --if-present
+          npm test --if-present
+          npm run build --if-present
+
+      # ─────────────────────────────────────────────
+      # leaderboard-service
+      # ─────────────────────────────────────────────
+      - name: Install leaderboard-service dependencies
+        working-directory: leaderboard-service
+        run: npm ci
+
+      - name: Check leaderboard-service scripts
+        working-directory: leaderboard-service
+        run: |
+          npm run lint --if-present
+          npm test --if-present
+          npm run build --if-present
+
+      # ─────────────────────────────────────────────
+      # game-service
+      # ─────────────────────────────────────────────
+      - name: Install game-service dependencies
+        working-directory: game-service
+        run: npm ci
+
+      - name: Check game-service scripts
+        working-directory: game-service
+        run: |
+          npm run lint --if-present
+          npm test --if-present
+          npm run build --if-present
+
+      # ─────────────────────────────────────────────
+      # client
+      # ─────────────────────────────────────────────
+      - name: Install client dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Check client scripts
+        working-directory: client
+        run: |
+          npm run lint --if-present
+          npm test --if-present
+
+      - name: Build client
+        working-directory: client
+        run: npm run build
+        env:
+          NODE_ENV: production
+          VITE_BUILD_VERSION: ${{ github.sha }}
+
+      - name: Upload client build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.CLIENT_ARTIFACT_NAME }}
+          path: client/dist/
+          retention-days: 14
+          if-no-files-found: error
