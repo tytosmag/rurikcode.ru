@@ -1,0 +1,44 @@
+services:
+  db:
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+
+  auth-service:
+    build:
+      context: ./auth-service
+    image: rurik-auth-service:local
+    volumes:
+      - ./auth-service:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm run migrate && npm run dev"
+
+  leaderboard-service:
+    build:
+      context: ./leaderboard-service
+    image: rurik-leaderboard-service:local
+    volumes:
+      - ./leaderboard-service:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm run migrate && npm run dev"
+
+  game-service:
+    build:
+      context: ./game-service
+    image: rurik-game-service:local
+    volumes:
+      - ./game-service:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm run dev"
+
+  client:
+    build:
+      context: ./client
+    image: rurik-client:local
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+
+  gateway:
+    ports:
+      - "${GATEWAY_HTTP_PORT:-8080}:80"

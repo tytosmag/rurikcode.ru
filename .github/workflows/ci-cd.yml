@@ -36,9 +36,6 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      # ─────────────────────────────────────────────
-      # auth-service
-      # ─────────────────────────────────────────────
       - name: Install auth-service dependencies
         working-directory: auth-service
         run: npm ci
@@ -50,9 +47,6 @@ jobs:
           npm test --if-present
           npm run build --if-present
 
-      # ─────────────────────────────────────────────
-      # leaderboard-service
-      # ─────────────────────────────────────────────
       - name: Install leaderboard-service dependencies
         working-directory: leaderboard-service
         run: npm ci
@@ -64,9 +58,6 @@ jobs:
           npm test --if-present
           npm run build --if-present
 
-      # ─────────────────────────────────────────────
-      # game-service
-      # ─────────────────────────────────────────────
       - name: Install game-service dependencies
         working-directory: game-service
         run: npm ci
@@ -78,9 +69,6 @@ jobs:
           npm test --if-present
           npm run build --if-present
 
-      # ─────────────────────────────────────────────
-      # client
-      # ─────────────────────────────────────────────
       - name: Install client dependencies
         working-directory: client
         run: npm ci
@@ -215,7 +203,7 @@ jobs:
       - name: npm audit for ${{ matrix.service }}
         working-directory: ${{ matrix.service }}
         run: npm audit --audit-level=high
-        continue-on-error: true # Allow workflow to continue even if vulnerabilities are found
+        continue-on-error: true
 
       - name: Scan for secrets with Trufflehog
         if: matrix.service == 'auth-service'
@@ -224,7 +212,7 @@ jobs:
           path: ./
           base: ${{ github.event.repository.default_branch }}
           head: HEAD
-        continue-on-error: true # Allow workflow to continue even if secrets are found
+        continue-on-error: true
 
   codeql:
     name: JOB 3 — CodeQL analysis
@@ -250,3 +238,129 @@ jobs:
         uses: github/codeql-action/analyze@v3
         with:
           category: /language:javascript-typescript
+
+  deploy-staging:
+    name: JOB 4 — Deploy to staging
+    runs-on: ubuntu-latest
+    needs:
+      - docker
+      - security
+      - codeql
+
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+
+    timeout-minutes: 15
+
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_URL }}
+
+    steps:
+      - name: Deploy to staging server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          port: ${{ secrets.STAGING_SSH_PORT }}
+          script: |
+            set -e
+
+            echo "Login to GHCR..."
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+            echo "Go to staging directory..."
+            cd ${{ secrets.STAGING_APP_DIR }}
+
+            echo "Pull repository changes..."
+            git fetch origin develop
+            git reset --hard origin/develop
+
+            echo "Pull new images..."
+            docker compose -f docker-compose.yml -f docker-compose.staging.yml pull
+
+            echo "Start staging containers..."
+            docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d --remove-orphans
+
+            echo "Cleanup old images..."
+            docker image prune -f
+
+      - name: Smoke test staging
+        run: |
+          for i in {1..12}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ vars.STAGING_URL }}/health")
+
+            if [ "$STATUS" = "200" ]; then
+              echo "Staging health check passed: HTTP $STATUS"
+              exit 0
+            fi
+
+            echo "Attempt $i: HTTP $STATUS"
+            sleep 5
+          done
+
+          echo "Staging health check failed"
+          exit 1
+
+  deploy-production:
+    name: JOB 5 — Deploy to production
+    runs-on: ubuntu-latest
+    needs:
+      - docker
+      - security
+      - codeql
+
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    timeout-minutes: 20
+
+    environment:
+      name: production
+      url: ${{ vars.PRODUCTION_URL }}
+
+    steps:
+      - name: Deploy to production server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_SSH_PORT }}
+          script: |
+            set -e
+
+            echo "Login to GHCR..."
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+            echo "Go to production directory..."
+            cd ${{ secrets.PRODUCTION_APP_DIR }}
+
+            echo "Pull repository changes..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "Pull new images..."
+            docker compose -f docker-compose.yml -f docker-compose.production.yml pull
+
+            echo "Start production containers..."
+            docker compose -f docker-compose.yml -f docker-compose.production.yml up -d --remove-orphans
+
+            echo "Cleanup old images..."
+            docker image prune -f
+
+      - name: Smoke test production
+        run: |
+          for i in {1..20}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ vars.PRODUCTION_URL }}/health")
+
+            if [ "$STATUS" = "200" ]; then
+              echo "Production health check passed: HTTP $STATUS"
+              exit 0
+            fi
+
+            echo "Attempt $i: HTTP $STATUS"
+            sleep 5
+          done
+
+          echo "Production health check failed"
+          exit 1
