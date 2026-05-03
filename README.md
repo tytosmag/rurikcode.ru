@@ -1,75 +1,37 @@
-# rurikcode.ru
+# Код Рюрика
+<p>
+  <a href="https://github.com/tytosmag/rurikcode.ru/actions/workflows/ci-cd.yml">
+    <img src="https://github.com/tytosmag/rurikcode.ru/actions/workflows/ci-cd.yml/badge.svg?branch=develop" alt="CI/CD Pipeline" />
+  </a>
+  <img src="https://img.shields.io/badge/Docker-GHCR-blue?logo=docker" />
+  <img src="https://img.shields.io/badge/Node.js-20.x-green?logo=node.js" />
+  <img src="https://img.shields.io/badge/React-19-blue?logo=react" />
+  <img src="https://img.shields.io/badge/PostgreSQL-16-blue?logo=postgresql" />
+  <img src="https://img.shields.io/badge/Security-CodeQL%20%2B%20TruffleHog-purple" />
+</p>
 
-### Останавливаем docker-compose:
-```bash
-$ sudo docker-compose down
-```
+**Код Рюрика** — интерактивная историческая игра-квест с микросервисной архитектурой, авторизацией, игровым прогрессом и таблицей лидеров.
 
-### Обычный запуск docker-compose:
-```bash
-$ docker-compose up
-```
+---
 
-### Запускаем docker-compose с пересборкой проекта:
-```bash
-$ sudo docker-compose up --build
-```
+## Ссылки
 
-### Рестарт приложения одной командой:
-```bash
-$ sudo docker-compose restart app
-```
+| Окружение | URL |
+|----------|-----|
+| Staging  | https://staging.rurikcode.ru |
+| Production | https://rurikcode.ru |
 
-### Полный сброс данных (ключ -v удаляет данные Postgres)
-```bash
-$ docker-compose down -v
-```
+---
 
-# Миграции
-```bash
-$ npx knex migrate:make create_users_tables
-```
-```bash
-$ npx knex migrate:latest
-```
+## Архитектура
 
-### Если запустить с флагом -d,
-```bash
-$ sudo docker-compose up --build -d
-```
-то можно перезагружать `server` и `client` отдельно:
-```bash
-$ docker-compose restart server
-```
-```bash
-$ docker-compose restart client
-```
-
-### Клиент запускается на:
-```bash
-http://localhost:5173/
-```
-
-### Сервер запускается на:
-```bash
-http://localhost:3000/
-```
-
-# Troubleshooting
-### Найти процесс, который занял порт и завершить его:
-```bash
-$ sudo lsof -i :5432
-```
-```bash
-$ sudo kill -9 1234
-```
-
-### Принудительное удаление проблемного контейнера:
-```bash
-$ sudo docker rm -f ee17a0e9fc07
-```
-
-### Посмотр логов контейнера с БД:
-```bash
-$ sudo docker logs rurik_db
-```
+```text
+rurikcode.ru/
+├── auth-service/
+├── leaderboard-service/
+├── game-service/
+├── client/
+├── gateway/
+├── docker-compose.yml
+├── docker-compose.staging.yml
+└── docker-compose.production.yml
