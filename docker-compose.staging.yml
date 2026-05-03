@@ -17,11 +17,15 @@ services:
   client:
     image: ghcr.io/tytosmag/rurikcode.ru/client:staging
     container_name: rurik_staging_client
+    expose:
+      - "80"
 
   gateway:
     container_name: rurik_staging_gateway
     ports:
       - "${GATEWAY_HTTP_PORT:-8080}:80"
+    volumes:
+      - ./gateway/nginx.prod.conf:/etc/nginx/nginx.conf:ro
 
 volumes:
   postgres_data:
