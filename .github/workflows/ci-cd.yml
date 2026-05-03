@@ -147,8 +147,10 @@ jobs:
           images: ${{ matrix.service.image }}
           tags: |
             type=sha,format=long,prefix=sha-
+            type=ref,event=branch
             type=ref,event=pr
             type=raw,value=staging,enable=${{ github.ref == 'refs/heads/develop' }}
+            type=raw,value=production,enable=${{ github.ref == 'refs/heads/main' }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
       - name: Build and optionally push Docker image
@@ -413,13 +415,13 @@ jobs:
             cd "$APP_DIR"
 
             echo "Check compose config..."
-            docker compose -f docker-compose.yml -f docker-compose.production.yml config
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml config
 
             echo "Pull new images..."
-            docker compose -f docker-compose.yml -f docker-compose.production.yml pull
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
 
             echo "Start production containers..."
-            docker compose -f docker-compose.yml -f docker-compose.production.yml up -d --remove-orphans
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
 
             echo "Cleanup old images..."
             docker image prune -f

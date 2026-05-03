@@ -33,7 +33,10 @@ services:
   client:
     build:
       context: ./client
+      target: build
     image: rurik-client:local
+    expose:
+      - "5173"
     volumes:
       - ./client:/app
       - /app/node_modules

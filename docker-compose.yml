@@ -60,8 +60,7 @@ services:
       - leaderboard-service
       - game-service
     expose:
-      - "5173"
-    command: npm run dev -- --host 0.0.0.0
+      - "80"
 
   gateway:
     image: nginx:1.27-alpine
