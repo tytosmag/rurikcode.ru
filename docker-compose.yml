@@ -1,14 +1,12 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: rurik_db
+    container_name: ${COMPOSE_PROJECT_NAME:-rurik}_db
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "${POSTGRES_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -17,9 +15,70 @@ services:
       timeout: 5s
       retries: 10
 
+  auth-service:
+    image: ${AUTH_SERVICE_IMAGE}
+    container_name: ${COMPOSE_PROJECT_NAME:-rurik}_auth
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ./.env
+    expose:
+      - "3000"
+    command: sh -c "npm run migrate && npm start"
+
+  leaderboard-service:
+    image: ${LEADERBOARD_SERVICE_IMAGE}
+    container_name: ${COMPOSE_PROJECT_NAME:-rurik}_leaderboard
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ./.env
+    expose:
+      - "3001"
+    command: sh -c "npm run migrate && npm start"
+
+  game-service:
+    image: ${GAME_SERVICE_IMAGE}
+    container_name: ${COMPOSE_PROJECT_NAME:-rurik}_game
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    expose:
+      - "3002"
+    command: npm start
+
+  client:
+    image: ${CLIENT_IMAGE}
+    container_name: ${COMPOSE_PROJECT_NAME:-rurik}_client
+    restart: unless-stopped
+    depends_on:
+      - auth-service
+      - leaderboard-service
+      - game-service
+    expose:
+      - "80"
+
+  gateway:
+    image: nginx:1.27-alpine
+    container_name: ${COMPOSE_PROJECT_NAME:-rurik}_gateway
+    restart: unless-stopped
+    depends_on:
+      - client
+      - auth-service
+      - leaderboard-service
+      - game-service
+    ports:
+      - "${GATEWAY_HTTP_PORT:-8080}:80"
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+
   alloy-agent:
     image: grafana/alloy:latest
-    container_name: rurik_alloy_agent
+    container_name: ${COMPOSE_PROJECT_NAME:-rurik}_alloy_agent
     restart: unless-stopped
     command:
       - "run"
@@ -30,27 +89,26 @@ services:
     volumes:
       - ./observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    profiles:
+      - observability
 
   node_exporter:
     image: prom/node-exporter:latest
-    container_name: rurik_node_exporter
+    container_name: ${COMPOSE_PROJECT_NAME:-rurik}_node_exporter
     restart: unless-stopped
     command:
       - "--path.rootfs=/host"
     pid: host
     volumes:
-      # TODO:
-      # В локальной системе Docker через Snap/окружение не дает использовать rslave для /. 
-      # Нужно это как-то обойти, чтобы избежать проблем с зависимостями между контейнерами и хостом. 
-      # Пока что просто ro, но это может вызвать проблемы с метриками при перезапуске контейнера.
-      # - "/:/host:ro,rslave" 
       - "/:/host:ro"
     ports:
       - "${NODE_EXPORTER_PORT:-9100}:9100"
+    profiles:
+      - observability
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
-    container_name: rurik_cadvisor
+    container_name: ${COMPOSE_PROJECT_NAME:-rurik}_cadvisor
     restart: unless-stopped
     privileged: true
     devices:
@@ -63,10 +121,12 @@ services:
       - "/dev/disk/:/dev/disk:ro"
     ports:
       - "${CADVISOR_PORT:-18080}:8080"
+    profiles:
+      - observability
 
   postgres_exporter:
     image: prometheuscommunity/postgres-exporter:latest
-    container_name: rurik_postgres_exporter
+    container_name: ${COMPOSE_PROJECT_NAME:-rurik}_postgres_exporter
     restart: unless-stopped
     environment:
       DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable"
@@ -75,10 +135,12 @@ services:
         condition: service_healthy
     ports:
       - "${POSTGRES_EXPORTER_PORT:-9187}:9187"
+    profiles:
+      - observability
 
   nginx_exporter:
     image: nginx/nginx-prometheus-exporter:latest
-    container_name: rurik_nginx_exporter
+    container_name: ${COMPOSE_PROJECT_NAME:-rurik}_nginx_exporter
     restart: unless-stopped
     command:
       - "-nginx.scrape-uri=http://gateway/stub_status"
@@ -86,80 +148,8 @@ services:
       - gateway
     ports:
       - "${NGINX_EXPORTER_PORT:-9113}:9113"
-
-  auth-service:
-    build:
-      context: ./auth-service
-    container_name: rurik_auth
-    restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-    env_file:
-      - ./.env
-    expose:
-      - "3000"
-    volumes:
-      - ./auth-service:/app
-      - /app/node_modules
-    command: sh -c "npm install && npm run migrate && npm run dev"
-
-  leaderboard-service:
-    build:
-      context: ./leaderboard-service
-    container_name: rurik_leaderboard
-    restart: unless-stopped
-    env_file:
-      - ./.env
-    expose:
-      - "3001"
-    volumes:
-      - ./leaderboard-service:/app
-      - /app/node_modules
-    command: sh -c "npm install && npm run migrate && npm run dev"
-
-  game-service:
-    build:
-      context: ./game-service
-    container_name: rurik_game
-    restart: unless-stopped
-    env_file:
-      - ./.env
-    expose:
-      - "3002"
-    volumes:
-      - ./game-service:/app
-      - /app/node_modules
-    command: sh -c "npm install && npm run dev"
-
-  client:
-    build:
-      context: ./client
-    container_name: rurik_client
-    restart: unless-stopped
-    depends_on:
-      - auth-service
-    expose:
-      - "5173"
-    volumes:
-      - ./client:/app
-      - /app/node_modules
-    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
-
-  gateway:
-    image: nginx:1.27-alpine
-    container_name: rurik_gateway
-    restart: unless-stopped
-    depends_on:
-      - client
-      - auth-service
-      - leaderboard-service
-      - game-service
-    ports:
-      - "8080:80"
-      - "443:443"
-    volumes:
-      - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+    profiles:
+      - observability
 
 volumes:
   postgres_data:

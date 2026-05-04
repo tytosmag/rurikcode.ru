@@ -1,0 +1,32 @@
+services:
+  db:
+    container_name: rurik_production_db
+
+  auth-service:
+    image: ghcr.io/tytosmag/rurikcode.ru/auth-service:production
+    container_name: rurik_production_auth
+
+  leaderboard-service:
+    image: ghcr.io/tytosmag/rurikcode.ru/leaderboard-service:production
+    container_name: rurik_production_leaderboard
+
+  game-service:
+    image: ghcr.io/tytosmag/rurikcode.ru/game-service:production
+    container_name: rurik_production_game
+
+  client:
+    image: ghcr.io/tytosmag/rurikcode.ru/client:production
+    container_name: rurik_production_client
+    expose:
+      - "80"
+
+  gateway:
+    container_name: rurik_production_gateway
+    ports:
+      - "${GATEWAY_HTTP_PORT:-8080}:80"
+    volumes:
+      - ./gateway/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+
+volumes:
+  postgres_data:
+    name: rurik_production_postgres_data

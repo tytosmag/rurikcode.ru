@@ -1,0 +1,38 @@
+# Для локальной разработки в продакшн-стиле. Использует те же образы, что и docker-compose.prod.yml, но с локальными тегами. 
+# Предполагается, что образы уже собраны локально через docker compose build.
+services:
+  auth-service:
+    build:
+      context: ./auth-service
+    image: rurik-auth-service:local-prod
+    container_name: rurik_local_prod_auth
+
+  leaderboard-service:
+    build:
+      context: ./leaderboard-service
+    image: rurik-leaderboard-service:local-prod
+    container_name: rurik_local_prod_leaderboard
+
+  game-service:
+    build:
+      context: ./game-service
+    image: rurik-game-service:local-prod
+    container_name: rurik_local_prod_game
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    image: rurik-client:local-prod
+    container_name: rurik_local_prod_client
+    expose:
+      - "80"
+    ports:
+      - "8081:80"
+
+  gateway:
+    container_name: rurik_local_prod_gateway
+    ports:
+      - "8082:80"
+    volumes:
+      - ./gateway/nginx.prod.conf:/etc/nginx/nginx.conf:ro
