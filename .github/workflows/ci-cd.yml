@@ -442,3 +442,35 @@ jobs:
 
           echo "Production health check failed"
           exit 1
+
+  purge-cloudflare-cache:
+    name: JOB 6 — Purge Cloudflare CDN cache
+    runs-on: ubuntu-latest
+    needs: deploy-production
+
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    timeout-minutes: 5
+
+    steps:
+      - name: Purge Cloudflare CDN cache
+        run: |
+          set -e
+
+          echo "Purge Cloudflare CDN cache..."
+
+          RESPONSE=$(curl -sS -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}')
+
+          echo "$RESPONSE"
+
+          SUCCESS=$(echo "$RESPONSE" | jq -r '.success')
+
+          if [ "$SUCCESS" != "true" ]; then
+            echo "Cloudflare cache purge failed"
+            exit 1
+          fi
+
+          echo "Cloudflare cache purged successfully"
