@@ -17,6 +17,10 @@ services:
   client:
     image: ghcr.io/tytosmag/rurikcode.ru/client:staging
     container_name: rurik_staging_client
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    volumes: []
     expose:
       - "80"
 
