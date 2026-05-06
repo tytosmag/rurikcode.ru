@@ -26,7 +26,7 @@ services:
       context: ./client
       dockerfile: Dockerfile
       args:
-        VITE_CDN_URL: ${VITE_CDN_URL:-https://cdn.rurikcode.ru}
+        VITE_CDN_URL: ${VITE_CDN_URL:-}
     image: rurik-client:local-prod
     container_name: rurik_local_prod_client
     expose:
