@@ -1,5 +1,7 @@
-# Для локальной разработки в продакшн-стиле. Использует те же образы, что и docker-compose.prod.yml, но с локальными тегами. 
-# Предполагается, что образы уже собраны локально через docker compose build.
+# Для локальной разработки в продакшн-стиле.
+# Использует локальную сборку сервисов, но запускает проект как production-like окружение.
+# client собирается через Nginx и получает CDN base URL на этапе build.
+
 services:
   auth-service:
     build:
@@ -23,6 +25,8 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile
+      args:
+        VITE_CDN_URL: ${VITE_CDN_URL:-https://cdn.rurikcode.ru}
     image: rurik-client:local-prod
     container_name: rurik_local_prod_client
     expose:
