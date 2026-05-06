@@ -166,6 +166,7 @@ jobs:
           build-args: |
             BUILD_VERSION=${{ github.sha }}
             NODE_ENV=production
+            VITE_CDN_URL=${{ vars.VITE_CDN_URL }}
           cache-from: type=gha,scope=${{ matrix.service.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service.name }}
 

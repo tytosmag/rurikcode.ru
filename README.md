@@ -34,4 +34,4 @@ rurikcode.ru/
 ├── gateway/
 ├── docker-compose.yml
 ├── docker-compose.staging.yml
-└── docker-compose.production.yml
+└── docker-compose.prod.yml
