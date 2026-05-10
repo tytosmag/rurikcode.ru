@@ -3,7 +3,7 @@ import Header from './Header';
 
 export default function Layout() {
   const { pathname } = useLocation();
-  const isImmersivePage = pathname === '/' || pathname === '/leaderboard';
+  const isImmersivePage = ['/', '/leaderboard', '/login', '/registr', '/register'].includes(pathname);
 
   return (
     <div className={isImmersivePage ? 'app-shell app-shell-home' : 'app-shell'}>

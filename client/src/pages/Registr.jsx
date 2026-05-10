@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { registerRequest } from '../api/authApi';
+import logoMenu from '../assets/home/logo_menu.png';
+import GameTopBar from '../components/GameTopBar';
 import { useToast } from '../context/ToastContext';
 
 export default function Registr() {
@@ -8,9 +10,9 @@ export default function Registr() {
     username: '',
     password: ''
   });
-
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const navigate = useNavigate();
   const { showToast } = useToast();
 
@@ -28,7 +30,7 @@ export default function Registr() {
 
     try {
       const { data } = await registerRequest(form);
-      setMessage(data.message);
+      setMessage(data.message || 'Аккаунт создан');
       showToast('Регистрация успешна', 'success');
 
       setTimeout(() => {
@@ -42,34 +44,59 @@ export default function Registr() {
   };
 
   return (
-    <section className="form-section">
-      <form className="form-card" onSubmit={handleSubmit}>
-        <h2>Регистрация</h2>
+    <section className="auth-page auth-register-page" aria-label="Регистрация">
+      <GameTopBar />
 
-        <input
-          type="text"
-          name="username"
-          placeholder="Логин"
-          value={form.username}
-          onChange={handleChange}
-        />
+      <Link to="/" className="auth-logo" aria-label="На главную">
+        <img src={logoMenu} alt="" />
+        <span>КОД РЮРИКА</span>
+      </Link>
 
-        <input
-          type="password"
-          name="password"
-          placeholder="Пароль"
-          value={form.password}
-          onChange={handleChange}
-        />
+      <form className="auth-panel" onSubmit={handleSubmit}>
+        <h1>Создать аккаунт</h1>
 
-        {message && <p className="success">{message}</p>}
-        {error && <p className="error">{error}</p>}
+        <label>
+          Никнейм
+          <input
+            type="text"
+            name="username"
+            placeholder="Будет вашим логином в игре"
+            value={form.username}
+            onChange={handleChange}
+            required
+          />
+        </label>
 
-        <button type="submit">Создать аккаунт</button>
+        <label>
+          Пароль
+          <span className="auth-password-field">
+            <input
+              type={isPasswordVisible ? 'text' : 'password'}
+              name="password"
+              placeholder="Пароль"
+              value={form.password}
+              onChange={handleChange}
+              required
+            />
+            <button
+              type="button"
+              className="auth-password-toggle"
+              aria-label={isPasswordVisible ? 'Скрыть пароль' : 'Показать пароль'}
+              onClick={() => setIsPasswordVisible((current) => !current)}
+            />
+          </span>
+        </label>
 
-        <div className="form-links">
-          <Link to="/login">Уже есть аккаунт?</Link>
-        </div>
+        {message && <p className="auth-success">{message}</p>}
+        {error && <p className="auth-error">{error}</p>}
+
+        <p className="auth-switch">
+          Уже есть аккаунт? <Link to="/login">Войти</Link>
+        </p>
+
+        <button type="submit" className="auth-submit">
+          ЗАРЕГИСТРИРОВАТЬСЯ
+        </button>
       </form>
     </section>
   );
