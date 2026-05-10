@@ -3,12 +3,12 @@ import Header from './Header';
 
 export default function Layout() {
   const { pathname } = useLocation();
-  const isHomePage = pathname === '/';
+  const isImmersivePage = pathname === '/' || pathname === '/leaderboard';
 
   return (
-    <div className={isHomePage ? 'app-shell app-shell-home' : 'app-shell'}>
-      {!isHomePage && <Header />}
-      <main className={isHomePage ? 'home-main' : 'container'}>
+    <div className={isImmersivePage ? 'app-shell app-shell-home' : 'app-shell'}>
+      {!isImmersivePage && <Header />}
+      <main className={isImmersivePage ? 'home-main' : 'container'}>
         <Outlet />
       </main>
     </div>
