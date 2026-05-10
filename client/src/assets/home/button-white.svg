@@ -1,0 +1,21 @@
+<svg width="681" height="111" viewBox="0 0 681 111" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="outer" x="0" y="0" width="681" height="111" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="3" stdDeviation="2.5" flood-color="#25140d" flood-opacity=".55"/>
+    </filter>
+    <filter id="inner" x="14" y="11" width="653" height="84" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="7"/>
+    </filter>
+    <linearGradient id="fill" x1="340.5" y1="8" x2="340.5" y2="103" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fffefd"/>
+      <stop offset=".48" stop-color="#f6f4f1"/>
+      <stop offset="1" stop-color="#d8d1ca"/>
+    </linearGradient>
+  </defs>
+  <g filter="url(#outer)">
+    <path d="M9 19C13 10 20 8 31 8L649 8C665 8 675 17 673 32L666 92C665 101 659 105 648 104L454 103L446 107L35 104C28 104 23 101 20 95C13 75 6 53 3 32C2 25 4 21 9 19Z" fill="#513126"/>
+    <path d="M15 23C18 17 25 15 35 15L647 15C659 15 665 22 664 32L659 88C658 94 654 96 646 96L456 95L448 100L39 97C33 97 30 94 28 89C22 71 16 52 12 34C11 29 12 25 15 23Z" fill="url(#fill)"/>
+    <path filter="url(#inner)" d="M34 25H645L640 83L455 82L446 88L48 85C42 67 36 49 34 25Z" fill="white" fill-opacity=".68"/>
+    <path d="M31 16H648C658 16 664 23 663 32L658 87C657 94 653 96 645 96L455 95L447 99L40 96C34 96 31 93 29 88C23 70 17 51 13 34C12 27 18 18 31 16Z" stroke="#7a584b" stroke-width="5" stroke-linejoin="round"/>
+  </g>
+</svg>
