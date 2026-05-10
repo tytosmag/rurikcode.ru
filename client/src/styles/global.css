@@ -311,3 +311,246 @@ input {
   display: grid;
   gap: 12px;
 }
+
+@font-face {
+  font-family: 'RurikTitle';
+  src: url('../assets/fonts/h1.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'RurikButton';
+  src: url('../assets/fonts/Slovic_Demo-Serif.otf') format('opentype');
+  font-display: swap;
+}
+
+.app-shell-home {
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.home-main {
+  min-height: 100vh;
+}
+
+.home-page {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: url('../assets/home/fon_me.png') center / cover no-repeat;
+  color: #311a11;
+  isolation: isolate;
+}
+
+.home-top-ui {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  right: 15px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.home-ui-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.home-icon-btn,
+.home-sound-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.86);
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.home-icon-btn {
+  width: 40px;
+  height: 40px;
+}
+
+.home-icon-btn img {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.home-sound-btn {
+  width: 40px;
+  height: 40px;
+}
+
+.home-sound-btn img {
+  width: 25px;
+  height: 25px;
+  object-fit: contain;
+}
+
+.home-icon-btn:hover,
+.home-sound-btn:hover {
+  background: rgba(255, 255, 255, 0.95);
+  transform: scale(1.08);
+}
+
+.home-content {
+  position: relative;
+  z-index: 2;
+  width: min(760px, calc(100vw - 40px));
+  min-height: 100vh;
+  padding: 48px 0 48px 8vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.home-logo {
+  width: clamp(88px, 10vw, 160px);
+  height: auto;
+  margin-left: clamp(180px, 35vw, 520px);
+  margin-bottom: 8px;
+}
+
+.home-title {
+  margin: 0 0 clamp(34px, 7vh, 86px);
+  font-family: 'RurikTitle', Georgia, serif;
+  font-size: 120px;
+  line-height: 0.86;
+  color: #8b0000;
+  letter-spacing: 0;
+  text-align: left;
+  text-wrap: balance;
+}
+
+.home-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: min(260px, 100%);
+  margin-left: clamp(40px, 9vw, 150px);
+}
+
+.rurik-menu-link {
+  display: block;
+}
+
+.rurik-btn {
+  width: 100%;
+  min-height: 50px;
+  padding: 14px 18px;
+  border: 0;
+  border-radius: 6px;
+  background: linear-gradient(#f2f2f2, #cfcfcf);
+  box-shadow: 0 3px 0 #999;
+  color: #24150d;
+  font-family: 'RurikButton', Georgia, serif;
+  font-size: 18px;
+  line-height: 1.15;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.rurik-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  filter: brightness(1.04);
+}
+
+.rurik-btn:active {
+  transform: translateY(1px) scale(0.99);
+  box-shadow: 0 1px 0 #777;
+}
+
+.rurik-btn.main {
+  background: linear-gradient(#c62828, #8e0000);
+  color: #fff;
+  box-shadow: 0 3px 0 #5a0000;
+}
+
+.home-character {
+  position: absolute;
+  right: clamp(12px, 6vw, 100px);
+  bottom: clamp(18px, 6vh, 60px);
+  z-index: 1;
+  height: min(80vh, 850px);
+  max-width: 52vw;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+@media (max-width: 900px) {
+  .home-content {
+    width: min(560px, calc(100vw - 32px));
+    padding-left: 32px;
+  }
+
+  .home-logo {
+    margin-left: 40px;
+  }
+
+  .home-title {
+    font-size: 84px;
+  }
+
+  .home-actions {
+    margin-left: 0;
+  }
+
+  .home-character {
+    right: -12vw;
+    height: 64vh;
+    opacity: 0.9;
+  }
+}
+
+@media (max-width: 640px) {
+  .home-content {
+    align-items: center;
+    width: 100%;
+    padding: 86px 20px 40px;
+    justify-content: flex-start;
+    text-align: center;
+  }
+
+  .home-logo {
+    width: 86px;
+    margin: 0 0 8px;
+  }
+
+  .home-title {
+    margin-bottom: 28px;
+    font-size: 58px;
+    text-align: center;
+  }
+
+  .home-actions {
+    width: min(280px, 100%);
+    margin-left: 0;
+    gap: 14px;
+  }
+
+  .rurik-btn {
+    min-height: 48px;
+    padding: 12px 16px;
+    font-size: 16px;
+  }
+
+  .home-character {
+    right: 50%;
+    bottom: -20px;
+    height: 36vh;
+    max-width: 82vw;
+    transform: translateX(50%);
+    opacity: 0.82;
+  }
+}
