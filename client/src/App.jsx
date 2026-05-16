@@ -29,6 +29,7 @@ function AppRoutes() {
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registr" element={<Registr />} />
+        <Route path="/register" element={<Registr />} />
         <Route path="/restore" element={<Restore />} />
 
         <Route

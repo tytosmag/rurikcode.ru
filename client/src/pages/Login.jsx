@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { loginRequest } from '../api/authApi';
+import logoMenu from '../assets/home/logo_menu.png';
+import GameTopBar from '../components/GameTopBar';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
@@ -9,8 +11,8 @@ export default function Login() {
     username: '',
     password: ''
   });
-
   const [error, setError] = useState('');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const navigate = useNavigate();
   const { setUser } = useAuth();
   const { showToast } = useToast();
@@ -39,34 +41,66 @@ export default function Login() {
   };
 
   return (
-    <section className="form-section">
-      <form className="form-card" onSubmit={handleSubmit}>
-        <h2>Авторизация</h2>
+    <section className="auth-page auth-login-page" aria-label="Авторизация">
+      <GameTopBar />
 
-        <input
-          type="text"
-          name="username"
-          placeholder="Логин"
-          value={form.username}
-          onChange={handleChange}
-        />
+      <Link to="/" className="auth-logo" aria-label="На главную">
+        <img src={logoMenu} alt="" />
+        <span>КОД РЮРИКА</span>
+      </Link>
 
-        <input
-          type="password"
-          name="password"
-          placeholder="Пароль"
-          value={form.password}
-          onChange={handleChange}
-        />
+      <form className="auth-panel" onSubmit={handleSubmit}>
+        <h1>
+          Чтобы продолжить,
+          <br />
+          нужна авторизация
+        </h1>
 
-        {error && <p className="error">{error}</p>}
+        <label>
+          Никнейм
+          <input
+            type="text"
+            name="username"
+            placeholder="Будет вашим логином в игре"
+            value={form.username}
+            onChange={handleChange}
+            required
+          />
+        </label>
 
-        <button type="submit">Войти</button>
+        <label>
+          Пароль
+          <span className="auth-password-field">
+            <input
+              type={isPasswordVisible ? 'text' : 'password'}
+              name="password"
+              placeholder="********"
+              value={form.password}
+              onChange={handleChange}
+              required
+            />
+            <button
+              type="button"
+              className="auth-password-toggle"
+              aria-label={isPasswordVisible ? 'Скрыть пароль' : 'Показать пароль'}
+              onClick={() => setIsPasswordVisible((current) => !current)}
+            />
+          </span>
+        </label>
 
-        <div className="form-links">
-          <Link to="/registr">Регистрация</Link>
-          <Link to="/restore">Восстановить пароль</Link>
-        </div>
+        <Link to="/restore" className="auth-forgot">
+          Забыли пароль?
+        </Link>
+
+        {error && <p className="auth-error">{error}</p>}
+
+        <p className="auth-switch">
+          Ещё нет аккаунта? <Link to="/registr">Зарегистрируйтесь</Link>
+        </p>
+
+        <button type="submit" className="auth-submit">
+          ВОЙТИ
+        </button>
       </form>
     </section>
   );
