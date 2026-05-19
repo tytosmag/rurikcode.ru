@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { registerRequest } from '../api/authApi';
 import logoMenu from '../assets/home/logo_menu.png';
-import GameTopBar from '../components/GameTopBar';
+import GameHeader from '../components/GameHeader';
 import { useToast } from '../context/ToastContext';
 
 export default function Registr() {
@@ -45,7 +45,7 @@ export default function Registr() {
 
   return (
     <section className="auth-page auth-register-page" aria-label="Регистрация">
-      <GameTopBar />
+      <GameHeader />
 
       <Link to="/" className="auth-logo" aria-label="На главную">
         <img src={logoMenu} alt="" />

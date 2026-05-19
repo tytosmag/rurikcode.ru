@@ -1,160 +1,338 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { createLeaderboardResultRequest } from '../api/leaderboardApi';
-import { getStartSceneRequest, submitChoiceRequest } from '../api/gameApi';
-import { useAuth } from '../context/AuthContext';
-import { useToast } from '../context/ToastContext';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import clickSoundSrc from '../assets/audio/click.mp3';
+import doorSoundSrc from '../assets/audio/door.mp3';
+import takeSoundSrc from '../assets/audio/take.mp3';
+import batonch from '../assets/game/batonch.png';
+import doorImage from '../assets/game/door-sklad.png';
+import doorBackground from '../assets/game/fon-doors.png';
+import officeBackground from '../assets/game/fon-2121.png';
+import vendingBackground from '../assets/game/fon-vend.png';
+import handsIcon from '../assets/game/hands.png';
+import vendingImage from '../assets/game/vending-sleep.png';
+import vendingReadyImage from '../assets/game/vending.png';
+import vovaOffice from '../assets/game/vova-2121.png';
+import vovaStorage from '../assets/game/vova-sklad.png';
+import vovaVending from '../assets/game/vova-vend.png';
+import GameHeader from '../components/GameHeader';
+
+const repairStartItems = [
+  { id: '1', text: 'Нажать кнопку ВКЛ' },
+  { id: '2', text: 'Взять вилку' },
+  { id: '3', text: 'Поднять аппарат' },
+  { id: '4', text: 'Вставить вилку в розетку' }
+];
+
+const correctRepairOrder = '3241';
 
 export default function Game() {
-  const { user } = useAuth();
-  const { showToast } = useToast();
+  const navigate = useNavigate();
+  const [stage, setStage] = useState('time');
+  const [showDoorHint, setShowDoorHint] = useState(false);
+  const [showVendingHint, setShowVendingHint] = useState(false);
+  const [isMiniGameOpen, setIsMiniGameOpen] = useState(false);
+  const [repairItems, setRepairItems] = useState(repairStartItems);
+  const [draggedId, setDraggedId] = useState(null);
+  const [selectedRepairId, setSelectedRepairId] = useState(null);
+  const [repairMessage, setRepairMessage] = useState('');
+  const [isRepaired, setIsRepaired] = useState(false);
 
-  const [scene, setScene] = useState(null);
-  const [score, setScore] = useState(0);
-  const [timeSeconds, setTimeSeconds] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [startedAt, setStartedAt] = useState(null);
+  const clickSound = useRef(null);
+  const doorSound = useRef(null);
+  const takeSound = useRef(null);
+  const draggedRepairId = useRef(null);
 
   useEffect(() => {
-    const loadStartScene = async () => {
-      try {
-        const { data } = await getStartSceneRequest();
-        setScene(data.scene);
-        setScore(0);
-        setStartedAt(Date.now());
-      } catch (error) {
-        console.error('Ошибка загрузки игры:', error);
-        showToast('Ошибка загрузки игры', 'error');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadStartScene();
-  }, []); //TODO: eslint потом может ругнуться
-
-  const handleChoice = async (choiceId) => {
-    if (!scene) return;
-
-    try {
-      const { data } = await submitChoiceRequest(scene.id, {
-        choiceId,
-        currentScore: score
-      });
-
-      setScene(data.scene);
-      setScore(data.score);
-
-      if (data.isFinal) {
-        const seconds = Math.floor((Date.now() - startedAt) / 1000);
-        setTimeSeconds(seconds);
-        showToast('Финальная сцена достигнута', 'success');
-      }
-    } catch (error) {
-      const message = error.response?.data?.message || 'Ошибка выбора';
-      showToast(message, 'error');
+    if (stage !== 'time') {
+      return undefined;
     }
+
+    const timeout = window.setTimeout(() => {
+      setStage('office');
+    }, 1800);
+
+    return () => window.clearTimeout(timeout);
+  }, [stage]);
+
+  useEffect(() => {
+    setShowDoorHint(false);
+    setShowVendingHint(false);
+
+    if (stage === 'door') {
+      const timeout = window.setTimeout(() => setShowDoorHint(true), 1200);
+      return () => window.clearTimeout(timeout);
+    }
+
+    if (stage === 'vending') {
+      const timeout = window.setTimeout(() => setShowVendingHint(true), 1200);
+      return () => window.clearTimeout(timeout);
+    }
+
+    return undefined;
+  }, [stage]);
+
+  const currentBackground = useMemo(() => {
+    if (stage === 'office') return officeBackground;
+    if (stage === 'door') return doorBackground;
+    if (stage === 'vending') return vendingBackground;
+    return null;
+  }, [stage]);
+
+  const playSound = (ref) => {
+    if (!ref.current) return;
+    ref.current.currentTime = 0;
+    ref.current.play().catch(() => {});
   };
 
-  const handleSaveResult = async () => {
-    if (!user) {
-      showToast('Войдите в аккаунт, чтобы сохранить результат', 'error');
+  const goToDoor = () => {
+    playSound(clickSound);
+    window.setTimeout(() => setStage('door'), 180);
+  };
+
+  const openDoor = () => {
+    playSound(doorSound);
+    window.setTimeout(() => setStage('vending'), 400);
+  };
+
+  const openMiniGame = () => {
+    playSound(doorSound);
+    setRepairMessage('');
+    draggedRepairId.current = null;
+    setDraggedId(null);
+    setSelectedRepairId(null);
+    setIsMiniGameOpen(true);
+  };
+
+  const swapItems = (sourceId, targetId) => {
+    if (!sourceId || sourceId === targetId) return;
+
+    setRepairItems((items) => {
+      const next = [...items];
+      const from = next.findIndex((item) => item.id === sourceId);
+      const to = next.findIndex((item) => item.id === targetId);
+
+      if (from < 0 || to < 0) return items;
+
+      [next[from], next[to]] = [next[to], next[from]];
+      return next;
+    });
+  };
+
+  const moveRepairItem = (sourceId, targetId) => {
+    if (!sourceId || sourceId === targetId) return;
+
+    setRepairItems((items) => {
+      const from = items.findIndex((item) => item.id === sourceId);
+      const to = items.findIndex((item) => item.id === targetId);
+
+      if (from < 0 || to < 0) return items;
+
+      const next = [...items];
+      const [movedItem] = next.splice(from, 1);
+      next.splice(to, 0, movedItem);
+      return next;
+    });
+  };
+
+  const handleRepairItemClick = (itemId) => {
+    if (!selectedRepairId) {
+      setSelectedRepairId(itemId);
       return;
     }
 
-    try {
-      await createLeaderboardResultRequest({
-        score,
-        time_seconds: timeSeconds,
-        level: scene?.id || 'unknown'
-      });
-
-      showToast('Результат сохранён', 'success');
-    } catch (error) {
-      const message =
-        error.response?.data?.message || 'Ошибка сохранения результата';
-
-      showToast(message, 'error');
-    }
+    swapItems(selectedRepairId, itemId);
+    setSelectedRepairId(null);
   };
 
-  const handleRestart = async () => {
-    try {
-      const { data } = await getStartSceneRequest();
-      setScene(data.scene);
-      setScore(0);
-      setTimeSeconds(0);
-      setStartedAt(Date.now());
-      showToast('Игра начата заново', 'success');
-    } catch {
-      showToast('Ошибка перезапуска игры', 'error');
+  const checkRepair = () => {
+    const order = repairItems.map((item) => item.id).join('');
+
+    if (order === correctRepairOrder) {
+      playSound(takeSound);
+      setRepairMessage('Успех!');
+      setIsRepaired(true);
+      setIsMiniGameOpen(false);
+      return;
     }
+
+    setRepairMessage('Неверно. Попробуй ещё раз');
   };
 
-  if (isLoading) {
-    return (
-      <section className="content-page">
-        <h1>Новая игра</h1>
-        <p>Загрузка игры...</p>
-      </section>
-    );
-  }
+  const resetRepair = () => {
+    setRepairItems(repairStartItems);
+    setRepairMessage('');
+    draggedRepairId.current = null;
+    setDraggedId(null);
+    setSelectedRepairId(null);
+  };
 
-  if (!scene) {
+  if (stage === 'time') {
     return (
-      <section className="content-page">
-        <h1>Новая игра</h1>
-        <p>Сцена не найдена.</p>
+      <section className="index-time-screen" onClick={() => setStage('office')} aria-label="Начало игры">
+        <span className="index-city">Великий Новгород</span>
+        <span className="index-year">2121 ГОД</span>
       </section>
     );
   }
 
   return (
-    <section className="content-page">
-      <h1>Новая игра</h1>
+    <section className="index-game-page" style={{ backgroundImage: `url(${currentBackground})` }} aria-label="Новая игра">
+      <GameHeader />
 
-      <div className="content-card game-card">
-        <div className="game-stats">
-          <span>Очки: {score}</span>
-          <span>Сцена: {scene.id}</span>
-          {timeSeconds > 0 && <span>Время: {timeSeconds} сек.</span>}
-        </div>
-
-        <h2>{scene.title}</h2>
-        <p>{scene.text}</p>
-
-        {scene.isFinal ? (
-          <div className="game-actions">
-            <button type="button" onClick={handleSaveResult}>
-              Сохранить результат
-            </button>
-
-            <button type="button" onClick={handleRestart}>
-              Начать заново
-            </button>
-
-            <Link to="/leaderboard">
-              <button type="button">Открыть таблицу лидеров</button>
-            </Link>
+      {stage === 'office' && (
+        <>
+          <div className="index-office-text">
+            <p>
+              Привет! Меня зовут Вова,
+              <br />
+              я учусь в Школе21
+            </p>
+            <p>
+              Сегодня я засиделся допоздна,
+              <br />
+              чтобы закончить трудный проект
+            </p>
+            <p>
+              Пожалуй, пойду поищу кофейный
+              <br />
+              аппарат или станцию
+              <br />с питательными гелями...
+            </p>
           </div>
-        ) : (
-          <div className="game-actions">
-            {scene.choices.map((choice) => (
-              <button
-                key={choice.id}
-                type="button"
-                onClick={() => handleChoice(choice.id)}
-              >
-                {choice.text}
+
+          <div className="index-office-actions">
+            <button type="button" className="index-future-btn" onClick={goToDoor}>
+              ИСКАТЬ КОФЕ
+            </button>
+            <button type="button" className="index-future-btn" onClick={() => navigate('/')}>
+              ПОЙТИ ДОМОЙ
+            </button>
+          </div>
+
+          <img src={vovaOffice} className="index-vova-office" alt="" />
+        </>
+      )}
+
+      {stage === 'door' && (
+        <>
+          <button type="button" className="index-door-hitbox" aria-label="Открыть дверь" onClick={openDoor}>
+            <img src={doorImage} className="index-door-img" alt="" />
+          </button>
+
+          <img src={vovaStorage} className="index-vova-storage" alt="" />
+
+          <div className="index-dialogue index-dialogue-center">Хм М М М!... Не замечал раньше этой двери...</div>
+
+          {showDoorHint && (
+            <div className="index-hint index-hint-door">
+              <img src={handsIcon} alt="" />
+              <span>Нажмите, чтоб открыть</span>
+            </div>
+          )}
+        </>
+      )}
+
+      {stage === 'vending' && (
+        <>
+          <button
+            type="button"
+            className={isRepaired ? 'index-vending-hitbox is-repaired index-vending-glow' : 'index-vending-hitbox'}
+            aria-label="Открыть вендинговый аппарат"
+            onClick={isRepaired ? undefined : openMiniGame}
+            onMouseEnter={() => setShowVendingHint(false)}
+          >
+            <img src={isRepaired ? vendingReadyImage : vendingImage} className={isRepaired ? 'index-vending-img is-repaired' : 'index-vending-img'} alt="" />
+          </button>
+
+          <img src={vovaVending} className="index-vova-vending" alt="" />
+
+          <div className="index-dialogue index-dialogue-right">
+            Ого, как много пыли! Да сюда никто не заходил уже лет 100!
+          </div>
+
+          {showVendingHint && !isRepaired && (
+            <div className="index-hint index-hint-vending">
+              <img src={handsIcon} alt="" />
+              <span>Нажмите, чтоб открыть</span>
+            </div>
+          )}
+
+          {repairMessage && !isMiniGameOpen && !isRepaired && (
+            <div className="index-repair-toast">{repairMessage}</div>
+          )}
+
+          {isRepaired && (
+            <div className="index-bar-prize">
+              <img src={batonch} className="index-bar-img" alt="Батончик" />
+              <Link to="/login" className="index-eat-btn">
+                СЪЕСТЬ БАТОНЧИК
+              </Link>
+            </div>
+          )}
+        </>
+      )}
+
+      {isMiniGameOpen && (
+        <div className="index-minigame" role="dialog" aria-modal="true" aria-label="Починить вендинговый аппарат">
+          <div className="index-minigame-bg" onClick={() => setIsMiniGameOpen(false)} />
+
+          <div className="index-minigame-board">
+            <h2>Починить вендинговый аппарат</h2>
+            <p>Перетащите действия в правильном порядке, чтобы аппарат заработал.</p>
+
+            <div className="index-repair-items">
+              {repairItems.map((item) => (
+                <div
+                  key={item.id}
+                  className={[
+                    'index-repair-item',
+                    draggedId === item.id ? 'dragging' : '',
+                    selectedRepairId === item.id ? 'selected' : ''
+                  ].filter(Boolean).join(' ')}
+                  draggable
+                  onClick={() => handleRepairItemClick(item.id)}
+                  onDragStart={(event) => {
+                    event.dataTransfer.effectAllowed = 'move';
+                    event.dataTransfer.setData('text/plain', item.id);
+                    draggedRepairId.current = item.id;
+                    setDraggedId(item.id);
+                    setSelectedRepairId(null);
+                  }}
+                  onDragEnter={(event) => {
+                    event.preventDefault();
+                    moveRepairItem(draggedRepairId.current, item.id);
+                  }}
+                  onDragEnd={() => {
+                    draggedRepairId.current = null;
+                    setDraggedId(null);
+                  }}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    moveRepairItem(draggedRepairId.current || event.dataTransfer.getData('text/plain') || draggedId, item.id);
+                    draggedRepairId.current = null;
+                    setDraggedId(null);
+                  }}
+                >
+                  {item.text}
+                </div>
+              ))}
+            </div>
+
+            {repairMessage && <p className="index-repair-message">{repairMessage}</p>}
+
+            <div className="index-minigame-actions">
+              <button type="button" className="index-mg-btn index-mg-btn-check" onClick={checkRepair}>
+                Проверить
               </button>
-            ))}
+            </div>
           </div>
-        )}
+        </div>
+      )}
 
-        <Link to="/">
-          <button type="button">Назад на главную</button>
-        </Link>
-      </div>
+      <audio ref={clickSound} src={clickSoundSrc} preload="auto" />
+      <audio ref={doorSound} src={doorSoundSrc} preload="auto" />
+      <audio ref={takeSound} src={takeSoundSrc} preload="auto" />
     </section>
   );
 }

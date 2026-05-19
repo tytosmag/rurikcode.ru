@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { loginRequest } from '../api/authApi';
 import logoMenu from '../assets/home/logo_menu.png';
-import GameTopBar from '../components/GameTopBar';
+import GameHeader from '../components/GameHeader';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 
@@ -42,7 +42,7 @@ export default function Login() {
 
   return (
     <section className="auth-page auth-login-page" aria-label="Авторизация">
-      <GameTopBar />
+      <GameHeader />
 
       <Link to="/" className="auth-logo" aria-label="На главную">
         <img src={logoMenu} alt="" />
